@@ -99,13 +99,18 @@ struct ListPageBK {
     }
   ]
   alphabets: string[] = ['#', '热', "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "W", "X", "Y", "Z"]
-
+  @State isShow:boolean=false
+  @State index:number=0
+  ls:ListScroller=new ListScroller()
   build() {
     Column() {
       Button('显示城市选择')
-
+        .bindContentCover($$this.isShow,this.ContentCoverBuilder())
+        .onClick(()=>{
+          this.isShow=true
+        })
       // 全屏模态的内容
-      this.ContentCoverBuilder()
+      // this.ContentCoverBuilder()
     }
     .width('100%')
     .height('100%')
@@ -130,15 +135,17 @@ struct ListPageBK {
 
   @Builder
   AlphabetBuilder() {
-    Text()
-      .width(20)
-      .height(400)
-      .backgroundColor(Color.Orange)
+    AlphabetIndexer({arrayValue:this.alphabets,selected:$$this.index})
+      .usingPopup(true)
+      .onSelect((i)=>{
+        this.index=i
+        this.ls.scrollToIndex(this.index)
+      })
   }
 
   @Builder
   ListBuilder() {
-    List({ space: 30 }) {
+    List({ space: 30 ,scroller:this.ls}) {
       // 历史
       this.LocationListItemBuilder()
       // 热门
@@ -151,24 +158,33 @@ struct ListPageBK {
     .width('100%')
     .layoutWeight(1)
     .sticky(StickyStyle.Header)
+    .onScrollIndex((index)=>{
+      this.index=index
+    })
 
   }
 
   @Builder
   LetterListItemBuilder() {
-    // A-B的区域
-    ListItemGroup({ header: this.ListItemGroupHeaderBuilder('A') }) {
-      ListItem() {
-        Text('阿拉善')
+    ForEach(this.cityContentList,(item:BKCityContent,i)=>{
+      ListItemGroup({ header: this.ListItemGroupHeaderBuilder(item.initial) }) {
+        ForEach(item.cityNameList,(it:string,i)=>{
+          ListItem() {
+            Text(it)
+              .width('100%')
+              .padding({ left: 20 })
+          }
           .width('100%')
-          .padding({ left: 20 })
+          .height(50)
+          .backgroundColor(Color.White)
+        })
+
       }
-      .width('100%')
-      .height(50)
-      .backgroundColor(Color.White)
-    }
-    .padding({ bottom: 20 })
-    .divider({ startMargin: 20, endMargin: 20, color: '#f3f3f3', strokeWidth: 2 })
+      .padding({ bottom: 20 })
+      .divider({ startMargin: 20, endMargin: 20, color: '#f3f3f3', strokeWidth: 2 })
+    })
+    // A-B的区域
+
   }
 
   @Builder
@@ -191,11 +207,14 @@ struct ListPageBK {
           .fontColor(Color.Gray)
           .fontSize(14)
         Flex({ wrap: FlexWrap.Wrap }) {
-          Text('北京')
-            .height(25)
-            .backgroundColor(Color.White)
-            .width('25%')
-            .margin({ bottom: 10 })
+          ForEach(this.historyCitys,(item:string,index:number)=>{
+            Text(item)
+              .height(25)
+              .backgroundColor(Color.White)
+              .width('25%')
+              .margin({ bottom: 10 })
+          })
+
         }
         .padding({ left: 20, right: 20 })
       }
@@ -229,11 +248,13 @@ struct ListPageBK {
             .alignSelf(ItemAlign.Start)
             .fontSize(14)
           Flex({ wrap: FlexWrap.Wrap }) {
-            Text('北京')
-              .height(25)
-              .backgroundColor(Color.White)
-              .width('25%')
-              .margin({ bottom: 10 })
+            ForEach(this.historyCitys,(item:string,index:number)=>{
+              Text(item)
+                .height(25)
+                .backgroundColor(Color.White)
+                .width('25%')
+                .margin({ bottom: 10 })
+            })
           }
           .padding({ left: 20, right: 20 })
         }
@@ -252,6 +273,9 @@ struct ListPageBK {
         Image($r('app.media.ic_public_cancel'))
           .width(30)
           .fillColor(Color.Gray)
+          .onClick(()=>{
+            this.isShow=false
+          })
 
         Row({ space: 5 }) {
           Image($r('app.media.ic_public_search'))
